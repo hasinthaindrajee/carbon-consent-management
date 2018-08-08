@@ -219,6 +219,14 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         };
     }
 
+    @DataProvider(name = "deleteDataProviderForPurposes")
+    public static Object[][] deletePurposeData() {
+        return new Object[][]{
+                // deleteId
+                {"uuid-invalid1"},
+        };
+    }
+
     @DataProvider(name = "receiptListDataProvider")
     public static Object[][] receiptListData() {
         return new Object[][]{
@@ -325,8 +333,8 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
     public void testIsPurposeCategoryExists() throws Exception {
 
         PurposeCategory purposeCategory = addPurposeCategory("PC1");
-        Assert.assertTrue(consentManager.isPurposeCategoryExists(purposeCategory.getName()), "PurposeCategory PC1 " +
-                "should exist.");
+        Assert.assertTrue(consentManager.isPurposeCategoryExists(purposeCategory.getName()),
+                "PurposeCategory PC1 should exist.");
     }
 
     @Test
@@ -437,7 +445,8 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
     @Test
     public void testIsInvalidPIICategoryExists() throws Exception {
 
-        Assert.assertTrue(!consentManager.isPIICategoryExists("Invalid"), "Invalid PII category shouldn't exist");
+        Assert.assertTrue(!consentManager.isPIICategoryExists("Invalid"),
+                "Invalid PII category shouldn't exist");
     }
 
     @Test
@@ -447,7 +456,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         Purpose result = consentManager.addPurpose(purpose);
 
         Assert.assertNotNull(result, "Purpose cannot be null.");
-        Assert.assertNotNull(result.getId(), "Purpose ID cannot be null.");
+        Assert.assertNotNull(result.getPurposeId(), "Purpose ID cannot be null.");
     }
 
     @Test(expectedExceptions = ConsentManagementClientException.class)
@@ -465,11 +474,11 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         Purpose addPurpose = consentManager.addPurpose(purpose);
         Assert.assertNotNull(addPurpose, "Purpose cannot be null.");
 
-        Purpose getPurpose = consentManager.getPurpose(addPurpose.getId());
+        Purpose getPurpose = consentManager.getPurpose(addPurpose.getPurposeId(), purpose.getVersion());
 
         Assert.assertNotNull(getPurpose, "Purpose cannot be null.");
-        Assert.assertNotNull(getPurpose.getId(), "Purpose ID cannot be null.");
-        Assert.assertEquals(getPurpose.getId(), addPurpose.getId());
+        Assert.assertNotNull(getPurpose.getPurposeId(), "Purpose ID cannot be null.");
+        Assert.assertEquals(getPurpose.getPurposeId(), addPurpose.getPurposeId());
         Assert.assertEquals(getPurpose.getDescription(), addPurpose.getDescription());
     }
 
@@ -480,25 +489,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         Assert.fail("Expected: " + ConsentManagementClientException.class.getName());
     }
 
-    @Test(expectedExceptions = ConsentManagementClientException.class)
-    public void testGetPurposeByInvalidName() throws Exception {
 
-        consentManager.getPurposeByName("Invalid", "Invalid group", "Invalid group type");
-        Assert.fail("Expected: " + ConsentManagementClientException.class.getName());
-    }
-
-    @Test
-    public void testGetPurposeByName() throws Exception {
-
-        String name = "P1";
-        Purpose purpose = addPurpose(name);
-        Purpose purposeByName = consentManager.getPurposeByName(purpose.getName(), purpose.getGroup(), purpose
-                .getGroupType());
-
-        Assert.assertNotNull(purposeByName, "Purpose cannot be null.");
-        Assert.assertEquals(purposeByName.getId(), purpose.getId());
-        Assert.assertEquals(purposeByName.getName(), name);
-    }
 
     @Test(dataProvider = "listWithDefaultDataProvider")
     public void testListPurposes(int limit, int offset, int resultCount) throws Exception {
@@ -521,34 +512,13 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
     public void testDeletePurpose() throws Exception {
 
         Purpose purpose = addPurpose("P1");
-        consentManager.deletePurpose(purpose.getId());
+        consentManager.deletePurpose(purpose.getPurposeId());
     }
 
-    @Test(expectedExceptions = ConsentManagementClientException.class, dataProvider = "deleteDataProvider")
-    public void testDeleteInvalidPurpose(int id) throws Exception {
+    @Test(expectedExceptions = ConsentManagementClientException.class, dataProvider = "deleteDataProviderForPurposes")
+    public void testDeleteInvalidPurpose(String id) throws Exception {
 
         consentManager.deletePurpose(id);
-    }
-
-    @Test
-    public void testIsPurposeExists() throws Exception {
-
-        Purpose purpose = addPurpose("P1");
-        Assert.assertTrue(consentManager.isPurposeExists(purpose.getName(), purpose.getGroup(), purpose.getGroupType()),
-                          "Purpose 'P1' should exist.");
-    }
-
-    @Test
-    public void testIsInvalidPurposeExists() throws Exception {
-
-        Assert.assertTrue(!consentManager.isPurposeExists("Invalid", "Invalid group", "Invalid group type"),
-                          "Purpose should not exist.");
-    }
-
-    @Test(expectedExceptions = ConsentManagementClientException.class)
-    public void testIsNullPurposeExists() throws Exception {
-
-        consentManager.isPurposeExists(null, null, null);
     }
 
     private Purpose addPurpose(String name) throws ConsentManagementException {
@@ -625,7 +595,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         purposeInput1.setTermination(termination);
         purposeInput1.setConsentType(consentType);
         purposeInput1.setThirdPartyDisclosure(false);
-        purposeInput1.setPurposeId(purpose1.getId());
+        purposeInput1.setUniqueId(purpose1.getUniqueId());
         purposeInput1.setPurposeCategoryId(purposeCategoryIds);
         purposeInput1.setPiiCategory(piiCategoryIds);
 
@@ -635,7 +605,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         purposeInput2.setConsentType(consentType);
         purposeInput2.setThirdPartyDisclosure(true);
         purposeInput2.setThirdPartyName("bar-company");
-        purposeInput2.setPurposeId(purpose2.getId());
+        purposeInput2.setUniqueId(purpose2.getUniqueId());
         purposeInput2.setPurposeCategoryId(purposeCategoryIds);
         purposeInput2.setPiiCategory(piiCategoryIds);
 
@@ -759,7 +729,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         purposeInput1.setTermination(termination);
         purposeInput1.setConsentType(consentType);
         purposeInput1.setThirdPartyDisclosure(false);
-        purposeInput1.setPurposeId(purpose1.getId());
+        purposeInput1.setUniqueId(purpose1.getUniqueId());
         purposeInput1.setPurposeCategoryId(purposeCategoryIds);
         purposeInput1.setPiiCategory(piiCategoryIds);
 
@@ -769,7 +739,7 @@ public class InterceptingConsentManagerTest extends PowerMockTestCase {
         purposeInput2.setConsentType(consentType);
         purposeInput2.setThirdPartyDisclosure(true);
         purposeInput2.setThirdPartyName("bar-company");
-        purposeInput2.setPurposeId(purpose2.getId());
+        purposeInput2.setUniqueId(purpose2.getUniqueId());
         purposeInput2.setPurposeCategoryId(purposeCategoryIds);
         purposeInput2.setPiiCategory(piiCategoryIds);
 

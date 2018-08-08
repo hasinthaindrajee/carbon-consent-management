@@ -24,7 +24,9 @@ import java.util.List;
  */
 public class Purpose {
 
-    private Integer id;
+    private Integer uniqueId;
+    private String purposeId;
+    private Integer version;
     private String name;
     private String description;
     private String group;
@@ -34,14 +36,17 @@ public class Purpose {
     private int tenantId;
     private String tenantDomain;
 
-    public void setId(Integer id) {
+    public void setUniqueId(Integer id) {
 
-        this.id = id;
+        this.uniqueId = id;
     }
 
-    public Purpose(Integer id, String name, String description, String group, String groupType, int tenantId) {
+    public Purpose(Integer uniqueId, String purposeId, int version, String name, String description, String group,
+                   String groupType, int tenantId) {
 
-        this.id = id;
+        this.uniqueId = uniqueId;
+        this.purposeId = purposeId;
+        this.version = version;
         this.name = name;
         this.description = description;
         this.group = group;
@@ -49,9 +54,11 @@ public class Purpose {
         this.tenantId = tenantId;
     }
 
-    public Purpose(Integer id, String name) {
+    public Purpose(Integer uniqueId, String purposeId, int version, String name) {
 
-        this.id = id;
+        this.uniqueId = uniqueId;
+        this.purposeId = purposeId;
+        this.version = version;
         this.name = name;
     }
 
@@ -64,7 +71,7 @@ public class Purpose {
     }
 
     public Purpose(String name, String description, String group, String groupType,
-                   List<PurposePIICategory> purposePIICategories) {
+                  List<PurposePIICategory> purposePIICategories) {
 
         this.name = name;
         this.description = description;
@@ -73,7 +80,8 @@ public class Purpose {
         this.purposePIICategories = purposePIICategories;
     }
 
-    public Purpose(String name, String description, String group, String groupType, int tenantId) {
+    public Purpose(String name, String description, String group, String groupType,
+                   int tenantId) {
 
         this.name = name;
         this.description = description;
@@ -82,10 +90,12 @@ public class Purpose {
         this.tenantId = tenantId;
     }
 
-    public Purpose(Integer id, String name, String description, String group,
+    public Purpose(Integer id, String purposeId, int version, String name, String description, String group,
                    String groupType, int tenantId, List<PurposePIICategory> purposePIICategories) {
 
-        this.id = id;
+        this.uniqueId = id;
+        this.purposeId = purposeId;
+        this.version = version;
         this.name = name;
         this.description = description;
         this.group = group;
@@ -94,17 +104,19 @@ public class Purpose {
         this.purposePIICategories = purposePIICategories;
     }
 
-    public Purpose(Integer id, String name, String description, int tenantId) {
+    public Purpose(Integer uniqueId, String purposeId, int version, String name, String description, int tenantId) {
 
-        this.id = id;
+        this.uniqueId = uniqueId;
+        this.purposeId = purposeId;
+        this.version = version;
         this.name = name;
         this.description = description;
         this.tenantId = tenantId;
     }
 
-    public Integer getId() {
+    public Integer getUniqueId() {
 
-        return id;
+        return uniqueId;
     }
 
     public String getName() {
@@ -194,4 +206,25 @@ public class Purpose {
 
         this.groupType = groupType;
     }
+
+    public String getPurposeId() {
+
+        return purposeId;
+    }
+
+    public void setPurposeId(String purposeId) {
+
+        this.purposeId = purposeId;
+    }
+
+    public Integer getVersion() {
+
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+
+        this.version = version;
+    }
+
 }

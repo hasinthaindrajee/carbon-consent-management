@@ -20,6 +20,8 @@ package org.wso2.carbon.consent.mgt.endpoint.util;
 import org.apache.commons.logging.Log;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
 import org.wso2.carbon.consent.mgt.core.constant.ConsentConstants;
+import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementClientException;
+import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementException;
 import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.PIICategoryValidity;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
@@ -29,6 +31,8 @@ import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptPurposeInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptServiceInput;
+import org.wso2.carbon.consent.mgt.core.util.ConsentUtils;
+import org.wso2.carbon.consent.mgt.core.util.LambdaExceptionUtils;
 import org.wso2.carbon.consent.mgt.endpoint.dto.AddressDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.ConsentReceiptDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.ConsentRequestDTO;
@@ -55,6 +59,8 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ID_INVALID;
 
 /**
  * This class is used to define the utilities require for Consent Management Web App.
@@ -167,7 +173,8 @@ public class ConsentEndpointUtils {
     public static PurposeGetResponseDTO getPurposeListResponse(Purpose purposeResponse) {
 
         PurposeGetResponseDTO purposeListResponseDTO = new PurposeGetResponseDTO();
-        purposeListResponseDTO.setPurposeId(purposeResponse.getId());
+        purposeListResponseDTO.setPurposeId(purposeResponse.getPurposeId());
+        purposeListResponseDTO.setVersion(purposeResponse.getVersion());
         purposeListResponseDTO.setPurpose(purposeResponse.getName());
         purposeListResponseDTO.setDescription(purposeResponse.getDescription());
         purposeListResponseDTO.setGroup(purposeResponse.getGroup());
@@ -235,7 +242,7 @@ public class ConsentEndpointUtils {
                     PurposeListResponseDTO purposeListResponseDTO = new PurposeListResponseDTO();
                     purposeListResponseDTO.setPurpose(purpose.getName());
                     purposeListResponseDTO.setDescription(purpose.getDescription());
-                    purposeListResponseDTO.setPurposeId(purpose.getId());
+                    purposeListResponseDTO.setPurposeId(purpose.getPurposeId());
                     purposeListResponseDTO.setGroup(purpose.getGroup());
                     purposeListResponseDTO.setGroupType(purpose.getGroupType());
                     return purposeListResponseDTO;
@@ -278,7 +285,7 @@ public class ConsentEndpointUtils {
      * @param consent ConsentRequestDTO instance.
      * @return ReceiptInput instance.
      */
-    public static ReceiptInput getReceiptInput(ConsentRequestDTO consent) {
+    public static ReceiptInput getReceiptInput(ConsentRequestDTO consent) throws ConsentManagementException {
 
         ReceiptInput receiptInput = new ReceiptInput();
         receiptInput.setCollectionMethod(consent.getCollectionMethod());
@@ -295,11 +302,19 @@ public class ConsentEndpointUtils {
             receiptServiceInput.setSpDisplayName(serviceDTO.getServiceDisplayName());
             receiptServiceInput.setSpDescription(serviceDTO.getServiceDescription());
             receiptServiceInput.setTenantDomain(serviceDTO.getTenantDomain());
-            receiptServiceInput.setPurposes(serviceDTO.getPurposes().stream().map(purposeDTO -> {
+            receiptServiceInput.setPurposes(serviceDTO.getPurposes().stream().map(LambdaExceptionUtils.rethrowFunction(purposeDTO -> {
                 ReceiptPurposeInput receiptPurposeInput = new ReceiptPurposeInput();
                 receiptPurposeInput.setConsentType(purposeDTO.getConsentType());
                 receiptPurposeInput.setPrimaryPurpose(purposeDTO.getPrimaryPurpose());
-                receiptPurposeInput.setPurposeId(purposeDTO.getPurposeId());
+                if (purposeDTO.getVersion() == null) {
+                    purposeDTO.setVersion(0);
+                }
+                Purpose purpose = getConsentManager().getPurpose(purposeDTO.getPurposeId(), purposeDTO.getVersion());
+                if (purpose == null) {
+                    throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ID_INVALID, String.valueOf(purposeDTO
+                            .getPurposeId()));
+                }
+                receiptPurposeInput.setUniqueId(purpose.getUniqueId());
                 receiptPurposeInput.setTermination(purposeDTO.getTermination());
                 receiptPurposeInput.setThirdPartyDisclosure(purposeDTO.getThirdPartyDisclosure());
                 receiptPurposeInput.setThirdPartyName(purposeDTO.getThirdPartyName());
@@ -308,7 +323,7 @@ public class ConsentEndpointUtils {
                                 .getValidity())).collect(Collectors.toList()));
                 receiptPurposeInput.setPurposeCategoryId(purposeDTO.getPurposeCategoryId());
                 return receiptPurposeInput;
-            }).collect(Collectors.toList()));
+            })).collect(Collectors.toList()));
             return receiptServiceInput;
         }).collect(Collectors.toList()));
         return receiptInput;
@@ -320,7 +335,7 @@ public class ConsentEndpointUtils {
      * @param receipt Receipt instance.
      * @return ConsentReceiptDTO.
      */
-    public static ConsentReceiptDTO getConsentReceiptDTO(Receipt receipt) {
+    public static ConsentReceiptDTO getConsentReceiptDTO(Receipt receipt) throws ConsentManagementException{
 
         ConsentReceiptDTO consentReceiptDTO = new ConsentReceiptDTO();
         consentReceiptDTO.setCollectionMethod(receipt.getCollectionMethod());
@@ -355,6 +370,7 @@ public class ConsentEndpointUtils {
                 purposeResponseDTO.setPrimaryPurpose(consentPurpose.isPrimaryPurpose());
                 purposeResponseDTO.setPurpose(consentPurpose.getPurpose());
                 purposeResponseDTO.setPurposeId(consentPurpose.getPurposeId());
+                purposeResponseDTO.setPurposeVersion(consentPurpose.getPurposeVersion());
                 purposeResponseDTO.setPurposeCategory(consentPurpose.getPurposeCategory());
                 purposeResponseDTO.setTermination(consentPurpose.getTermination());
                 purposeResponseDTO.setThirdPartyDisclosure(consentPurpose.isThirdPartyDisclosure());
@@ -384,4 +400,5 @@ public class ConsentEndpointUtils {
         }).collect(Collectors.toList()));
         return consentReceiptDTO;
     }
+
 }

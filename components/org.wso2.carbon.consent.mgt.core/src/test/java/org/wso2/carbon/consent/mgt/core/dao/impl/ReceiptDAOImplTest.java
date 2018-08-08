@@ -152,7 +152,7 @@ public class ReceiptDAOImplTest extends PowerMockTestCase {
         purposeInput1.setTermination(termination);
         purposeInput1.setConsentType(consentType);
         purposeInput1.setThirdPartyDisclosure(false);
-        purposeInput1.setPurposeId(1);
+        purposeInput1.setUniqueId(1);
         purposeInput1.setPurposeCategoryId(purposeCategoryIds);
         purposeInput1.setPiiCategory(piiCategoryIds);
 
@@ -162,7 +162,7 @@ public class ReceiptDAOImplTest extends PowerMockTestCase {
         purposeInput2.setConsentType(consentType);
         purposeInput2.setThirdPartyDisclosure(true);
         purposeInput2.setThirdPartyName("bar-company");
-        purposeInput2.setPurposeId(2);
+        purposeInput2.setUniqueId(2);
         purposeInput2.setPurposeCategoryId(purposeCategoryIds);
         purposeInput2.setPiiCategory(piiCategoryIds);
 

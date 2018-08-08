@@ -38,7 +38,7 @@
     String BUNDLE = "org.wso2.carbon.consent.mgt.ui.i18n.Resources";
     ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
 
-    int purposeId = Integer.parseInt(request.getParameter(PURPOSE_ID));
+    String purposeId = request.getParameter(PURPOSE_ID);
     String purposeName = request.getParameter(PURPOSE_NAME);
 
     Purpose purpose = null;

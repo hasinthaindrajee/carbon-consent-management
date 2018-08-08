@@ -197,7 +197,8 @@ public class ConsentConstants {
         ERROR_CODE_PURPOSE_GROUP_REQUIRED("CM_00086", "Purpose group is required."),
         ERROR_CODE_PURPOSE_GROUP_TYPE_REQUIRED("CM_00087", "Purpose group type is required."),
         ERROR_CODE_PURPOSE_PII_CONSTRAINT_REQUIRED("CM_00088", "Purpose PII category should be specified mandatory or" +
-                                                               " not for PII category ID: %s.");
+                                                               " not for PII category ID: %s."),
+        ERROR_CODE_LIST_PURPOSE_BY_ID("CM_00089", "Error occurred while listing purposes by ID: %s.");
 
         private final String code;
         private final String message;

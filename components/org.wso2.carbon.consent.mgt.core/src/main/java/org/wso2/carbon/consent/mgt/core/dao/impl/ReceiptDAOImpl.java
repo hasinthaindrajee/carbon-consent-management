@@ -546,7 +546,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         try {
             spToPurposeAssocId = jdbcTemplate.withTransaction(template -> template.executeInsert(INSERT_SP_TO_PURPOSE_ASSOC_SQL, (preparedStatement -> {
                 preparedStatement.setInt(1, receiptToSPAssocId);
-                preparedStatement.setInt(2, receiptPurposeInput.getPurposeId());
+                preparedStatement.setInt(2, receiptPurposeInput.getUniqueId());
                 preparedStatement.setString(3, receiptPurposeInput.getConsentType());
                 preparedStatement.setInt(4, receiptPurposeInput.isPrimaryPurpose() ? 1 : 0);
                 preparedStatement.setString(5, receiptPurposeInput.getTermination());
@@ -670,7 +670,8 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                     consentPurpose.setThirdPartyName(resultSet.getString(6));
                     consentPurpose.setPurpose(resultSet.getString(7));
                     consentPurpose.setPurposeDescription(resultSet.getString(8));
-                    consentPurpose.setPurposeId(resultSet.getInt(9));
+                    consentPurpose.setPurposeId(resultSet.getString(9));
+                    consentPurpose.setPurposeVersion(resultSet.getInt(10));
                     return consentPurpose;
                 }, preparedStatement -> preparedStatement.setInt(1, receiptToServiceId));
 

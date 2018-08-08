@@ -22,7 +22,8 @@ import java.util.List;
 public class ConsentPurpose {
 
     private String purpose;
-    private int purposeId;
+    private String purposeId;
+    private int purposeVersion;
     private String purposeDescription;
     private List<String> purposeCategory;
     private String consentType;
@@ -126,12 +127,12 @@ public class ConsentPurpose {
         this.serviceToPurposeId = serviceToPurposeId;
     }
 
-    public int getPurposeId() {
+    public String getPurposeId() {
 
         return purposeId;
     }
 
-    public void setPurposeId(int purposeId) {
+    public void setPurposeId(String purposeId) {
 
         this.purposeId = purposeId;
     }
@@ -144,5 +145,15 @@ public class ConsentPurpose {
     public void setPurposeDescription(String purposeDescription) {
 
         this.purposeDescription = purposeDescription;
+    }
+
+    public int getPurposeVersion() {
+
+        return purposeVersion;
+    }
+
+    public void setPurposeVersion(int purposeVersion) {
+
+        this.purposeVersion = purposeVersion;
     }
 }

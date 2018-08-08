@@ -188,13 +188,13 @@
                                         title="View PII Categories"
                                         <% if(callbackPresent) { %>
                                         href="view-pii-category.jsp?purposeId=<%=Encode.forHtmlAttribute(
-                                                String.valueOf(purpose.getId()))%>&purposeName=<%=Encode.forHtmlAttribute(
+                                                String.valueOf(purpose.getPurposeId()))%>&purposeName=<%=Encode.forHtmlAttribute(
                                                         purpose.getName() + "&" + urlAppender + "&callback=" +
                                                         Encode.forHtmlAttribute(URLEncoder.encode(callback,
                                                         StandardCharsets.UTF_8.name())))%>"
                                         <%} else {%>
                                         href="view-pii-category.jsp?purposeId=<%=Encode.forHtmlAttribute(
-                                                String.valueOf(purpose.getId()))%>&purposeName=<%=Encode.forHtmlAttribute(
+                                                String.valueOf(purpose.getPurposeId()))%>&purposeName=<%=Encode.forHtmlAttribute(
                                                         purpose.getName())%>"
                                         <%}%>
                                         class="icon-link"

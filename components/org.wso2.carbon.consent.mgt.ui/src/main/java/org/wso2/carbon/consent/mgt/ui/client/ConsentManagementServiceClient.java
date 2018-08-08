@@ -69,12 +69,12 @@ public class ConsentManagementServiceClient {
         List<Purpose> purposes = getConsentManager().listPurposes(purposeGroupName, purposeGroupType, 0, 0);
         return purposes.toArray(new Purpose[purposes.size()]);
     }
-    public Purpose getPurpose(int purposeId) throws ConsentManagementException {
+    public Purpose getPurpose(String purposeId) throws ConsentManagementException {
 
-        return getConsentManager().getPurpose(purposeId);
+        return getConsentManager().getPurpose(purposeId, 0);
     }
 
-    public void deletePurpose(int purposeId) throws ConsentManagementException {
+    public void deletePurpose(String purposeId) throws ConsentManagementException {
 
         handleLoggedInUserAuthorization(PERMISSION_CONSENT_MGT_DELETE);
         getConsentManager().deletePurpose(purposeId);
@@ -85,7 +85,7 @@ public class ConsentManagementServiceClient {
 
         handleLoggedInUserAuthorization(PERMISSION_CONSENT_MGT_DELETE);
         Purpose purposeByName = getConsentManager().getPurposeByName(purposeName, group, groupType);
-        deletePurpose(purposeByName.getId());
+        deletePurpose(purposeByName.getPurposeId());
     }
 
     public void addPurpose(PurposeRequestDTO purposeRequestDTO) throws ConsentManagementException {

@@ -130,9 +130,9 @@ public class PurposeDAOImplTest extends PowerMockTestCase {
             Purpose purposeResult = purposeDAO.addPurpose(purposes.get(0));
             Assert.assertEquals(purposeResult.getName(), purposes.get(0).getName());
 
-            Purpose purposeById = purposeDAO.getPurposeById(purposeResult.getId());
+            Purpose purposeById = purposeDAO.getPurposeByUniqueId(purposeResult.getUniqueId());
 
-            Assert.assertEquals(purposeById.getId(), purposeResult.getId());
+            Assert.assertEquals(purposeById.getUniqueId(), purposeResult.getUniqueId());
             Assert.assertEquals(purposeById.getName(), purposeResult.getName());
             Assert.assertEquals(purposeById.getDescription(), purposeResult.getDescription());
         }
@@ -150,7 +150,7 @@ public class PurposeDAOImplTest extends PowerMockTestCase {
             when(dataSource.getConnection()).thenReturn(spyConnection);
 
             PurposeDAO purposeDAO = new PurposeDAOImpl();
-            purposeDAO.getPurposeById(0);
+            purposeDAO.getPurposeByUniqueId(0);
 
             Assert.fail("Expected: " + ConsentManagementClientException.class.getName());
         }
@@ -168,92 +168,12 @@ public class PurposeDAOImplTest extends PowerMockTestCase {
             when(dataSource.getConnection()).thenReturn(spyConnection);
 
             PurposeDAO purposeDAO = new PurposeDAOImpl();
-            purposeDAO.getPurposeById(1);
+            purposeDAO.getPurposeByUniqueId(1);
 
             Assert.fail("Expected: " + ConsentManagementServerException.class.getName());
         }
     }
 
-    @Test
-    public void testGetPurposeByName() throws Exception {
-
-        DataSource dataSource = mock(DataSource.class);
-        mockComponentDataHolder(dataSource);
-
-        try (Connection connection = getConnection()) {
-
-            Connection spyConnection = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spyConnection);
-
-            PurposeDAO purposeDAO = new PurposeDAOImpl();
-            Purpose purpose = purposes.get(0);
-            Purpose purposeResult = purposeDAO.addPurpose(purpose);
-            Assert.assertEquals(purposeResult.getName(), purpose.getName());
-
-            Purpose purposeByName = purposeDAO.getPurposeByName(purposeResult.getName(), purposeResult.getGroup(),
-                                                                purposeResult.getGroupType(), purposeResult
-                                                                        .getTenantId());
-
-            Assert.assertEquals(purposeByName.getId(), purposeResult.getId());
-            Assert.assertEquals(purposeByName.getName(), purposeResult.getName());
-            Assert.assertEquals(purposeByName.getDescription(), purposeResult.getDescription());
-        }
-    }
-
-    @Test(expectedExceptions = ConsentManagementClientException.class)
-    public void testGetPurposeByNullName() throws Exception {
-
-        DataSource dataSource = mock(DataSource.class);
-        mockComponentDataHolder(dataSource);
-
-        try (Connection connection = getConnection()) {
-
-            Connection spyConnection = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spyConnection);
-
-            PurposeDAO purposeDAO = new PurposeDAOImpl();
-            purposeDAO.getPurposeByName(null, null, null, -1);
-
-            Assert.fail("Expected: " + ConsentManagementClientException.class.getName());
-        }
-    }
-
-    @Test
-    public void testGetPurposeByInvalidName() throws Exception {
-
-        DataSource dataSource = mock(DataSource.class);
-        mockComponentDataHolder(dataSource);
-
-        try (Connection connection = getConnection()) {
-
-            Connection spyConnection = spyConnection(connection);
-            when(dataSource.getConnection()).thenReturn(spyConnection);
-
-            PurposeDAO purposeDAO = new PurposeDAOImpl();
-
-            Purpose purposeByName = purposeDAO.getPurposeByName("InvalidName", "InvalidGroup", "InvalidGroupType", -1);
-
-            Assert.assertNull(purposeByName, "Result should be null for invalid purpose name.");
-        }
-    }
-
-    @Test(expectedExceptions = ConsentManagementServerException.class)
-    public void testGetPurposeByNameWithException() throws Exception {
-
-        DataSource dataSource = mock(DataSource.class);
-        mockComponentDataHolder(dataSource);
-
-        try (Connection connection = getConnection()) {
-
-            Connection spyConnection = spyConnectionWithError(connection);
-            when(dataSource.getConnection()).thenReturn(spyConnection);
-
-            PurposeDAO purposeDAO = new PurposeDAOImpl();
-            purposeDAO.getPurposeByName("Invalid Purpose", "InvalidGroup", "InvalidGroupType", -1);
-
-            Assert.fail("Expected: " + ConsentManagementServerException.class.getName());
-        }
-    }
 
     @Test(dataProvider = "purposeListProvider")
     public void testListPurposes(int limit, int offset, int tenantId, int resultSize) throws Exception {
@@ -317,9 +237,9 @@ public class PurposeDAOImplTest extends PowerMockTestCase {
             Purpose purposeResult = purposeDAO.addPurpose(purposes.get(0));
             Assert.assertEquals(purposeResult.getName(), purposes.get(0).getName());
 
-            int id = purposeDAO.deletePurpose(purposeResult.getId());
+            String id = purposeDAO.deletePurpose(purposeResult.getPurposeId());
 
-            Assert.assertEquals(new Integer(id), purposeResult.getId());
+            Assert.assertEquals(id, purposeResult.getPurposeId());
         }
     }
 
@@ -335,7 +255,7 @@ public class PurposeDAOImplTest extends PowerMockTestCase {
             when(dataSource.getConnection()).thenReturn(spyConnection);
 
             PurposeDAO purposeDAO = new PurposeDAOImpl();
-            purposeDAO.deletePurpose(0);
+            purposeDAO.deletePurpose("0000");
 
             Assert.fail("Expected: " + ConsentManagementServerException.class.getName());
         }

@@ -18,7 +18,10 @@ public class PurposeDTO  {
   
   
   
-  private Integer purposeId = null;
+  private String purposeId = null;
+  
+  
+  private Integer version = null;
   
   @NotNull
   private List<Integer> purposeCategoryId = new ArrayList<Integer>();
@@ -47,11 +50,24 @@ public class PurposeDTO  {
    **/
   @ApiModelProperty(value = "A unique Id of purpose")
   @JsonProperty("purposeId")
-  public Integer getPurposeId() {
+  public String getPurposeId() {
     return purposeId;
   }
-  public void setPurposeId(Integer purposeId) {
+  public void setPurposeId(String purposeId) {
     this.purposeId = purposeId;
+  }
+
+  
+  /**
+   * Version of the purpose
+   **/
+  @ApiModelProperty(value = "Version of the purpose")
+  @JsonProperty("version")
+  public Integer getVersion() {
+    return version;
+  }
+  public void setVersion(Integer version) {
+    this.version = version;
   }
 
   
@@ -153,6 +169,7 @@ public class PurposeDTO  {
     sb.append("class PurposeDTO {\n");
     
     sb.append("  purposeId: ").append(purposeId).append("\n");
+    sb.append("  version: ").append(version).append("\n");
     sb.append("  purposeCategoryId: ").append(purposeCategoryId).append("\n");
     sb.append("  consentType: ").append(consentType).append("\n");
     sb.append("  piiCategory: ").append(piiCategory).append("\n");

@@ -68,7 +68,7 @@
                 }
                 
                 try {
-                    String currentUser = (String) session.getAttribute(LOGGED_USER);
+                    String currentUser =  (String) session.getAttribute(LOGGED_USER);
                     ConsentManagementServiceClient serviceClient = new ConsentManagementServiceClient(currentUser);
                     serviceClient.deletePurposeByName(purposeName, purposeGroup, purposeGroupType);
                     forwardTo = listPurposePage;

@@ -21,7 +21,7 @@ import java.util.List;
 
 public class ReceiptPurposeInput {
 
-    private Integer purposeId;
+    private Integer uniqueId;
     private String purposeName;
     private List<Integer> purposeCategoryId;
     private String consentType;
@@ -31,14 +31,14 @@ public class ReceiptPurposeInput {
     private Boolean thirdPartyDisclosure;
     private String thirdPartyName;
 
-    public Integer getPurposeId() {
+    public Integer getUniqueId() {
 
-        return purposeId;
+        return uniqueId;
     }
 
-    public void setPurposeId(Integer purposeId) {
+    public void setUniqueId(Integer uniqueId) {
 
-        this.purposeId = purposeId;
+        this.uniqueId = uniqueId;
     }
 
     public List<Integer> getPurposeCategoryId() {

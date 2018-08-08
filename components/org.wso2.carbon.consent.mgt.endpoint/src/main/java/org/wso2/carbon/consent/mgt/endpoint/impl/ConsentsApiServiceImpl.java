@@ -163,8 +163,8 @@ public class ConsentsApiServiceImpl extends ConsentsApiService {
     @Override
     public Response consentsPost(ConsentRequestDTO consent) {
 
-        ReceiptInput receiptInput = getReceiptInput(consent);
         try {
+            ReceiptInput receiptInput = getReceiptInput(consent);
             AddReceiptResponse addReceiptResponse = getConsentManager().addConsent(receiptInput);
             return Response.ok()
                     .entity(addReceiptResponse)
@@ -282,7 +282,7 @@ public class ConsentsApiServiceImpl extends ConsentsApiService {
     public Response consentsPurposesPurposeIdDelete(String purposeId) {
 
         try {
-            getConsentManager().deletePurpose(Integer.parseInt(purposeId));
+            getConsentManager().deletePurpose(purposeId);
             return Response.ok().build();
         } catch (ConsentManagementClientException e) {
             return handleBadRequestResponse(e);

@@ -50,7 +50,6 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
-import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -85,19 +84,15 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMe
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CATEGORY_ID_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CATEGORY_NAME_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CAT_NAME_INVALID;
-
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages
-        .ERROR_CODE_PURPOSE_GROUP_REQUIRED;
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages
-        .ERROR_CODE_PURPOSE_GROUP_TYPE_REQUIRED;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_GROUP_REQUIRED;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_GROUP_TYPE_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ID_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ID_MANDATORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ID_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_IS_ASSOCIATED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_NAME_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_NAME_REQUIRED;
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages
-        .ERROR_CODE_PURPOSE_PII_CONSTRAINT_REQUIRED;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_PII_CONSTRAINT_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_RECEIPT_ID_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_SERVICE_NAME_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_TERMINATION_IS_REQUIRED;
@@ -169,6 +164,28 @@ public class ConsentManagerImpl implements ConsentManager {
     }
 
     /**
+     * This API is used to get the purpose by purpose name.
+     *
+     * @param name      Name of the purpose.
+     * @param group     Name of the purpose group.
+     * @param groupType Type of the purpose group.
+     * @return Purpose matching the input criteria.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    public Purpose getPurposeByName(String name, String group, String groupType) throws ConsentManagementException {
+
+        Purpose purposeByName = getPurposeFromName(name, group, groupType);
+        if (purposeByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No purpose found as the name: " + name + " in tenant domain: " +
+                        getTenantDomainFromCarbonContext());
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_NAME_INVALID, name);
+        }
+        return getPurposeById(purposeByName.getUniqueId());
+    }
+
+    /**
      * This API is used to get the purpose by purpose Id.
      *
      * @param purposeId ID of the purpose.
@@ -191,26 +208,37 @@ public class ConsentManagerImpl implements ConsentManager {
         return purpose;
     }
 
-    /**
-     * This API is used to get the purpose by purpose name.
-     *
-     * @param name Name of the purpose.
-     * @param group Name of the purpose group.
-     * @param groupType Type of the purpose group.
-     * @return Purpose matching the input criteria.
-     * @throws ConsentManagementException Consent Management Exception.
-     */
-    public Purpose getPurposeByName(String name, String group, String groupType) throws ConsentManagementException {
+    @Override
+    public Purpose getPurpose(String purposeId, int version) throws ConsentManagementException {
 
-        Purpose purposeByName = getPurposeFromName(name, group, groupType);
-        if (purposeByName == null) {
-            if (log.isDebugEnabled()) {
-                log.debug("No purpose found as the name: " + name + " in tenant domain: " +
-                        getTenantDomainFromCarbonContext());
-            }
-            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_NAME_INVALID, name);
+        if (version == 0) {
+            version = 1;
         }
-        return getPurposeById(purposeByName.getId());
+        Purpose purpose = getPurposeDAO(purposeDAOs).getPurpose(purposeId, version);
+        if (purpose == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No purpose found for the Id: " + purposeId);
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ID_INVALID, purposeId);
+        }
+        List<PurposePIICategory> purposePIICategories = new ArrayList<>();
+        purpose.getPurposePIICategories().forEach(rethrowConsumer(piiCategory -> purposePIICategories.add
+                (getPurposePIICategory(piiCategory))));
+        purpose.setPurposePIICategories(purposePIICategories);
+        return purpose;
+    }
+
+    @Override
+    public List<Purpose> getPurposes(String purposeId) throws ConsentManagementException {
+
+        List<Purpose> purposes = getPurposeDAO(purposeDAOs).getPurposes(purposeId);
+        if (purposes.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("No purpose found for the Id: " + purposeId);
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ID_INVALID, String.valueOf(purposeId));
+        }
+        return purposes;
     }
 
     /**
@@ -237,10 +265,10 @@ public class ConsentManagerImpl implements ConsentManager {
     /**
      * This API is used to get all or filtered existing purposes.
      *
-     * @param group Name of the purpose group.
+     * @param group     Name of the purpose group.
      * @param groupType Type of the purpose group.
-     * @param limit  Number of search results.
-     * @param offset Start index of the search.
+     * @param limit     Number of search results.
+     * @param offset    Start index of the search.
      * @return 200 OK with Filtered list of Purpose elements
      * @throws ConsentManagementException Consent Management Exception.
      */
@@ -264,40 +292,29 @@ public class ConsentManagerImpl implements ConsentManager {
      * @param purposeId ID of the purpose.
      * @throws ConsentManagementException Consent Management Exception.
      */
-    public void deletePurpose(int purposeId) throws ConsentManagementException {
+    public void deletePurpose(String purposeId) throws ConsentManagementException {
 
-        if (purposeId == 0 || purposeId < 0) {
+        if (StringUtils.isEmpty(purposeId)) {
             if (log.isDebugEnabled()) {
                 log.debug("Purpose Id is not found in the request or invalid purpose Id");
             }
             throw handleClientException(ERROR_CODE_PURPOSE_ID_REQUIRED, null);
         }
 
-        if (getPurposeById(purposeId) == null) {
+        if (getPurpose(purposeId, 0) == null) {
             throw handleClientException(ERROR_CODE_PURPOSE_ID_INVALID, String.valueOf(purposeId));
         }
 
-        if (getPurposeDAO(purposeDAOs).isPurposeUsed(purposeId)){
-            throw handleClientException(ERROR_CODE_PURPOSE_IS_ASSOCIATED, String.valueOf(purposeId));
-        }
-        int id = getPurposeDAO(purposeDAOs).deletePurpose(purposeId);
-        if (log.isDebugEnabled()) {
-            log.debug("Purpose deleted successfully. ID: " + id);
-        }
-    }
-
-    /**
-     * This API is used to check whether a purpose exists with given name, group and groupType.
-     *
-     * @param name Name of the purpose.
-     * @param group Purpose group.
-     * @param groupType Purpose group type.
-     * @return true, if an element is found.
-     * @throws ConsentManagementException Consent Management Exception.
-     */
-    public boolean isPurposeExists(String name, String group, String groupType) throws ConsentManagementException {
-
-        return getPurposeFromName(name, group, groupType) != null;
+        List<Purpose> purposes = getPurposes(purposeId);
+        purposes.stream().forEach(rethrowConsumer(purpose -> {
+            if (getPurposeDAO(purposeDAOs).isPurposeUsed(purpose.getUniqueId())) {
+                throw handleClientException(ERROR_CODE_PURPOSE_IS_ASSOCIATED, String.valueOf(purposeId));
+            }
+            String id = getPurposeDAO(purposeDAOs).deletePurpose(purposeId);
+            if (log.isDebugEnabled()) {
+                log.debug("Purpose deleted successfully. ID: " + id);
+            }
+        }));
     }
 
     /**
@@ -354,6 +371,20 @@ public class ConsentManagerImpl implements ConsentManager {
             throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_CAT_NAME_INVALID, name);
         }
         return purposeCategoryByName;
+    }
+
+    /**
+     * This API is used to check whether a purpose exists with given name, group and groupType.
+     *
+     * @param name Name of the purpose.
+     * @param group Purpose group.
+     * @param groupType Purpose group type.
+     * @return true, if an element is found.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    public boolean isPurposeExists(String name, String group, String groupType) throws ConsentManagementException {
+
+        return getPurposeFromName(name, group, groupType) != null;
     }
 
     /**
@@ -565,7 +596,7 @@ public class ConsentManagerImpl implements ConsentManager {
             if (log.isDebugEnabled()) {
                 log.debug("No receipt found with the Id: " + receiptId);
             }
-            String message = String.format(ERROR_CODE_RECEIPT_ID_INVALID.getMessage(), receiptId) + " in tenant: "+
+            String message = String.format(ERROR_CODE_RECEIPT_ID_INVALID.getMessage(), receiptId) + " in tenant: " +
                     ConsentUtils.getTenantDomainFromCarbonContext();
             throw new ConsentManagementClientException(message, ERROR_CODE_RECEIPT_ID_INVALID.getCode());
         }
@@ -598,7 +629,7 @@ public class ConsentManagerImpl implements ConsentManager {
         }
         String piiPrincipalTenantId = ConsentUtils.getTenantDomainFromCarbonContext();
         List<ReceiptListResponse> receiptListResponses = searchReceipts(limit, offset, piiPrincipalId, spTenantDomain,
-                                                                        service, state, piiPrincipalTenantId);
+                service, state, piiPrincipalTenantId);
         receiptListResponses.forEach(rethrowConsumer(receiptListResponse -> receiptListResponse.setTenantDomain
                 (ConsentUtils.getTenantDomain(realmService, receiptListResponse.getTenantId()))));
 
@@ -614,7 +645,7 @@ public class ConsentManagerImpl implements ConsentManager {
         if (StringUtils.isNotBlank(spTenantDomain)) {
             spTenantId = ConsentUtils.getTenantId(realmService, spTenantDomain);
         }
-        if(StringUtils.isNotBlank(principleTenantDomain)) {
+        if (StringUtils.isNotBlank(principleTenantDomain)) {
             principalTenantId = ConsentUtils.getTenantId(realmService, principleTenantDomain);
         }
         validatePaginationParameters(limit, offset);
@@ -673,12 +704,8 @@ public class ConsentManagerImpl implements ConsentManager {
     @Override
     public boolean isReceiptExist(String receiptId, String tenantAwareUsername, int tenantId) throws
             ConsentManagementException {
+
         return getReceiptsDAO(receiptDAOs).isReceiptExist(receiptId, tenantAwareUsername, tenantId);
-    }
-
-    private Purpose getPurposeFromName(String name, String group, String groupType) throws ConsentManagementException {
-
-        return getPurposeDAO(purposeDAOs).getPurposeByName(name, group, groupType, getTenantIdFromCarbonContext());
     }
 
     /**
@@ -744,7 +771,7 @@ public class ConsentManagerImpl implements ConsentManager {
 
     private Purpose getPurposeById(int purposeId) throws ConsentManagementException {
 
-        return getPurposeDAO(purposeDAOs).getPurposeById(purposeId);
+        return getPurposeDAO(purposeDAOs).getPurposeByUniqueId(purposeId);
     }
 
     /**
@@ -849,8 +876,8 @@ public class ConsentManagerImpl implements ConsentManager {
         String addressLocality = address.optString(ADDRESS_LOCALITY);
         String addressRegion = address.optString(ADDRESS_REGION);
         String addressPostOfficeBoxNumber = address.optString(POST_OFFICE_BOX_NUMBER);
-        String addressPostCode= address.optString(POSTAL_CODE);
-        String addressStreetAddress= address.optString(STREET_ADDRESS);
+        String addressPostCode = address.optString(POSTAL_CODE);
+        String addressStreetAddress = address.optString(STREET_ADDRESS);
 
         return new Address(addressCountry, addressLocality, addressRegion, addressPostOfficeBoxNumber,
                 addressPostCode, addressStreetAddress);
@@ -871,7 +898,7 @@ public class ConsentManagerImpl implements ConsentManager {
         Address piiAddress = controllerInfo.getAddress();
         if (piiAddress != null) {
             JSONObject address = new JSONObject();
-            address.put(ADDRESS_COUNTRY, piiAddress.getAddressCountry() );
+            address.put(ADDRESS_COUNTRY, piiAddress.getAddressCountry());
             address.put(ADDRESS_LOCALITY, piiAddress.getAddressLocality());
             address.put(ADDRESS_REGION, piiAddress.getAddressRegion());
             address.put(POST_OFFICE_BOX_NUMBER, piiAddress.getPostOfficeBoxNumber());
@@ -984,11 +1011,11 @@ public class ConsentManagerImpl implements ConsentManager {
             throws ConsentManagementException {
 
         String serviceName = receiptServiceInput.getService();
-        if (receiptPurposeInput.getPurposeId() == null) {
+        if (receiptPurposeInput.getUniqueId() == null) {
             throw handleClientException(ERROR_CODE_PURPOSE_ID_MANDATORY, serviceName);
         } else {
             // To verify whether the purpose exist in the system. This method will throw an exception if not exist.
-            Purpose purpose = getPurpose(receiptPurposeInput.getPurposeId());
+            Purpose purpose = getPurpose(receiptPurposeInput.getUniqueId());
             receiptPurposeInput.setPurposeName(purpose.getName());
         }
 
@@ -1187,7 +1214,13 @@ public class ConsentManagerImpl implements ConsentManager {
         PIICategory piiCategory = getPiiCategoryById(purposePIICategory.getId());
 
         PurposePIICategory purposePIICategoryResult = new PurposePIICategory(piiCategory,
-                                                                             purposePIICategory.getMandatory());
+                purposePIICategory.getMandatory());
         return purposePIICategoryResult;
     }
+
+    private Purpose getPurposeFromName(String name, String group, String groupType) throws ConsentManagementException {
+
+        return getPurposeDAO(purposeDAOs).getPurposeByName(name, group, groupType, getTenantIdFromCarbonContext());
+    }
+
 }
