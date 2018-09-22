@@ -36,6 +36,8 @@ public class ConsentConstants {
     public static final String RECEIPT_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" + "receipts";
     public static final String PURPOSE_CATEGORY_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" + "purpose-categories";
     public static final String PII_CATEGORY_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" + "pii-categories";
+    public static final String EXTERNAL_ENTITY_ASSOC_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" +
+            "purpose-entity-associations";
     public static final String API_VERSION = "KI-CR-v1.1.0";
     public static final String REVOKE_STATE = "REVOKED";
     public static final String ACTIVE_STATE = "ACTIVE";
@@ -61,6 +63,11 @@ public class ConsentConstants {
     public static final String RESULT = "RESULT";
     public static final String GROUP = "GROUP";
     public static final String GROUP_TYPE = "GROUP_TYPE";
+    public static final String PURPOSE_EXTERNAL_ENTITY_ASSOC = "PURPOSE_EXTERNAL_ENTITY_ASSOC";
+    public static final String EXTERNAL_ENTITY_NAME = "EXTERNAL_ENTITY_NAME";
+    public static final String EXTERNAL_ENTITY_TYPE = "EXTERNAL_ENTITY_TYPE";
+    public static final String PURPOSE_ENTITY_ASSOC_ID = "PURPOSE_ENTITY_ASSOC_ID";
+
 
     public static final String MY_SQL = "MySQL";
     public static final String POSTGRE_SQL = "PostgreSQL";
@@ -197,7 +204,20 @@ public class ConsentConstants {
         ERROR_CODE_PURPOSE_GROUP_REQUIRED("CM_00086", "Purpose group is required."),
         ERROR_CODE_PURPOSE_GROUP_TYPE_REQUIRED("CM_00087", "Purpose group type is required."),
         ERROR_CODE_PURPOSE_PII_CONSTRAINT_REQUIRED("CM_00088", "Purpose PII category should be specified mandatory or" +
-                                                               " not for PII category ID: %s.");
+                                                               " not for PII category ID: %s."),
+        ERROR_CODE_ADD_PURPOSE_EXTERNAL_ENTITY_ASSOCICATION("CM_00089", "Error occured while adding external entity " +
+                "association to purpose id: %s"),
+        ERROR_CODE_DELETE_PURPOSE_EXTERNAL_ENTITY_ASSOCICATION("CM_00090", "Error occured while deleting external " +
+                                                                       "entity association with id: %s"),
+        ERROR_CODE_LIST_PURPOSE_EXT_ENTITY_ASSOC("CM_00091", "Error occurred while listing purpose entity association" +
+                " for entity : %s and entity type: %s"),
+        ERROR_CODE_LIST_PURPOSE_EXT_ENTITY_ASSOC_BY_ID("CM_00092", "Error occurred while listing purpose entity " +
+                                                          "association for purpose id: %s"),
+
+        ERROR_CODE_PURPOSE_ASSOCIATION_ID_REQUIRED("CM_00093", "Purpose association ID is required."),
+        ERROR_CODE_PURPOSE_ENTITY_ASSOC_ID_INVALID("CM_00094", "Invalid purpose entity association Id: %s"),
+        ERROR_CODE_PURPOSE_ENTITY_ASSOC_ALREADY_EXISTS("CM_00094", "The purpose already associated with given entity" +
+                " name and entity type");
 
         private final String code;
         private final String message;
@@ -313,5 +333,10 @@ public class ConsentConstants {
         public static final String POST_DELETE_RECEIPT = "POST_DELETE_RECEIPT";
         public static final String PRE_LIST_RECEIPTS = "PRE_LIST_RECEIPTS";
         public static final String POST_LIST_RECEIPTS = "POST_LIST_RECEIPTS";
+
+        public static final String PRE_ADD_PURPOSE_EXT_ENTITY_ASSOC = "PRE_ADD_PURPOSE_EXT_ENTITY_ASSOC";
+        public static final String POST_ADD_PURPOSE_EXT_ENTITY_ASSOC = "POST_ADD_PURPOSE_EXT_ENTITY_ASSOC";
+        public static final String PRE_DELETE_PURPOSE_EXT_ENTITY_ASSOC = "PRE_DELETE_PURPOSE_EXT_ENTITY_ASSOC";
+        public static final String POST_DELETE_PURPOSE_EXT_ENTITY_ASSOC = "PRE_DELETE_PURPOSE_EXT_ENTITY_ASSOC";
     }
 }

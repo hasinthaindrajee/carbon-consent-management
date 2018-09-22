@@ -38,6 +38,7 @@ import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.PiiController;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
 import org.wso2.carbon.consent.mgt.core.model.PurposeCategory;
+import org.wso2.carbon.consent.mgt.core.model.PurposeEntityAssociation;
 import org.wso2.carbon.consent.mgt.core.model.PurposePIICategory;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
@@ -47,6 +48,7 @@ import org.wso2.carbon.consent.mgt.core.model.ReceiptServiceInput;
 import org.wso2.carbon.consent.mgt.core.util.ConsentConfigParser;
 import org.wso2.carbon.consent.mgt.core.util.ConsentUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.context.RegistryType;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
@@ -56,6 +58,7 @@ import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
@@ -86,6 +89,8 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMe
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CATEGORY_NAME_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CAT_NAME_INVALID;
 
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ENTITY_ASSOC_ALREADY_EXISTS;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ENTITY_ASSOC_ID_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages
         .ERROR_CODE_PURPOSE_GROUP_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages
@@ -1189,5 +1194,66 @@ public class ConsentManagerImpl implements ConsentManager {
         PurposePIICategory purposePIICategoryResult = new PurposePIICategory(piiCategory,
                                                                              purposePIICategory.getMandatory());
         return purposePIICategoryResult;
+    }
+
+    public PurposeEntityAssociation addPurposeEntityAssociation(PurposeEntityAssociation purposeEntityAssociation)
+            throws ConsentManagementException {
+
+        List<PurposeEntityAssociation> purposeEntityAssociations =
+                listPurposeAssociations(purposeEntityAssociation.getPurposeId(),
+                        purposeEntityAssociation.getExternalEntityName(),
+                        purposeEntityAssociation.getExternalEntityType(), purposeEntityAssociation.getTenantId(), 0, 0);
+        if (!purposeEntityAssociations.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Already existing associations found for this purpose with given entity name and type. " +
+                        "Purpose IDs are..");
+                purposeEntityAssociations.forEach(purposeEntityAssociationResult ->
+                        log.debug(purposeEntityAssociationResult.getAssociationId()));
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ENTITY_ASSOC_ALREADY_EXISTS, null);
+        }
+        return getPurposeDAO(purposeDAOs).addPurposeEntityAssociation(purposeEntityAssociation);
+    }
+
+    public void deletePurposeEntityAssociation(int associationId, int tenantId)
+            throws ConsentManagementException {
+
+        PurposeEntityAssociation purposeEntityAssociation = getPurposeDAO(purposeDAOs).
+                getPurposeEntityAssociation(associationId, tenantId);
+        if (purposeEntityAssociation == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No purpose entity association found for the Id: " + associationId);
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ENTITY_ASSOC_ID_INVALID,
+                    String.valueOf(associationId));
+        }
+        getPurposeDAO(purposeDAOs).deletePurposeEntityAssociation(associationId, tenantId);
+    }
+
+    public PurposeEntityAssociation getPurposeEntityAssociation(int associationId, int tenantId)
+            throws ConsentManagementException {
+
+        PurposeEntityAssociation purposeEntityAssociation = getPurposeDAO(purposeDAOs).
+                getPurposeEntityAssociation(associationId, tenantId);
+        if (purposeEntityAssociation == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("No purpose entity association found for the Id: " + associationId);
+            }
+            throw ConsentUtils.handleClientException(ERROR_CODE_PURPOSE_ENTITY_ASSOC_ID_INVALID,
+                    String.valueOf(associationId));
+        }
+        return purposeEntityAssociation;
+    }
+
+    public List<PurposeEntityAssociation> listPurposeAssociations(String purposeId, String externalEntityName, String
+            externalEntityType, int tenantId, int limit, int offset) throws ConsentManagementException {
+
+        return getPurposeDAO(purposeDAOs).listPurposeAssociations(purposeId, externalEntityName, externalEntityType,
+                tenantId, limit, offset);
+    }
+
+    private void validateInputParameters(PurposeEntityAssociation purposeEntityAssociation) throws
+            ConsentManagementException {
+
     }
 }

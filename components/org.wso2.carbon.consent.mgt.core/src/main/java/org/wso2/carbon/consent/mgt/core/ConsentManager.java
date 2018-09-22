@@ -21,11 +21,13 @@ import org.wso2.carbon.consent.mgt.core.model.AddReceiptResponse;
 import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
 import org.wso2.carbon.consent.mgt.core.model.PurposeCategory;
+import org.wso2.carbon.consent.mgt.core.model.PurposeEntityAssociation;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptListResponse;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Consent manager service interface.
@@ -287,4 +289,15 @@ public interface ConsentManager {
      */
     boolean isReceiptExist(String receiptId, String tenantAwareUsername, int tenantId) throws ConsentManagementException;
 
+    PurposeEntityAssociation addPurposeEntityAssociation (PurposeEntityAssociation purposeEntityAssociation)
+            throws ConsentManagementException;
+
+    PurposeEntityAssociation getPurposeEntityAssociation (int associationId, int tenantId)
+            throws ConsentManagementException;
+
+    void deletePurposeEntityAssociation (int associationId, int tenantId)
+            throws ConsentManagementException;
+
+    List<PurposeEntityAssociation> listPurposeAssociations(String purposeId, String externalEntityName, String
+            externalEntityType, int tenantId, int limit, int offset) throws ConsentManagementException;
 }

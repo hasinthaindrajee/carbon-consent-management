@@ -33,6 +33,7 @@ import org.wso2.carbon.consent.mgt.core.model.OperationDelegate;
 import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
 import org.wso2.carbon.consent.mgt.core.model.PurposeCategory;
+import org.wso2.carbon.consent.mgt.core.model.PurposeEntityAssociation;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptListResponse;
@@ -50,6 +51,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.wso2.carbon.CarbonConstants.UI_PERMISSION_ACTION;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_NO_USER_FOUND;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_ID_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_RECEIPT_ID_INVALID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_UNEXPECTED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED;
@@ -59,10 +61,12 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.GROUP_T
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PURPOSE_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PURPOSE_EXT_ENTITY_ASSOC;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_RECEIPT;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_DELETE_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_DELETE_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_DELETE_PURPOSE_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_DELETE_PURPOSE_EXT_ENTITY_ASSOC;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_DELETE_RECEIPT;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_GET_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_GET_PII_CATEGORY_BY_NAME;
@@ -82,10 +86,12 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.Interce
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_ADD_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_ADD_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_ADD_PURPOSE_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_ADD_PURPOSE_EXT_ENTITY_ASSOC;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_ADD_RECEIPT;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_DELETE_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_DELETE_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_DELETE_PURPOSE_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_DELETE_PURPOSE_EXT_ENTITY_ASSOC;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_DELETE_RECEIPT;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_GET_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_GET_PII_CATEGORY_BY_NAME;
@@ -117,6 +123,8 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY_ID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY_NAME;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_ENTITY_ASSOC_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_EXTERNAL_ENTITY_ASSOC;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_ID;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_NAME;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.RECEIPT_ID;
@@ -694,6 +702,13 @@ public class InterceptingConsentManager implements ConsentManager {
         properties.put(PRINCIPAL_TENANT_DOMAIN, principalTenantDomain);
     }
 
+    private void validateAuthorizationForPurposeExtEntityAssoc(PurposeEntityAssociation purposeEntityAssociation, int
+            tenantId) throws ConsentManagementClientException {
+
+        if (!(tenantId == purposeEntityAssociation.getTenantId())) {
+            throw handleClientException(ERROR_CODE_PURPOSE_ID_INVALID, purposeEntityAssociation.getPurposeId());
+        }
+    }
     private void validateAuthorizationForListReceipts(String piiPrincipalId) throws ConsentManagementException {
 
         String loggedInUser = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
@@ -788,4 +803,96 @@ public class InterceptingConsentManager implements ConsentManager {
             throw handleServerException(ERROR_CODE_UNEXPECTED, null, e);
         }
     }
+
+    public PurposeEntityAssociation addPurposeEntityAssociation(PurposeEntityAssociation purposeEntityAssociation)
+            throws ConsentManagementException {
+
+        Purpose purpose = consentManager.getPurpose(Integer.parseInt(purposeEntityAssociation.getPurposeId()));
+        purposeEntityAssociation.setTenantId(purpose.getTenantId());
+        validateAuthorizationForPurposeExtEntityAssoc(purposeEntityAssociation, purposeEntityAssociation.getTenantId());
+        ConsentMessageContext context = new ConsentMessageContext();
+        ConsentInterceptorTemplate<PurposeEntityAssociation, ConsentManagementException>
+                template = new ConsentInterceptorTemplate<>(consentMgtInterceptors, context);
+
+        return template.intercept(PRE_ADD_PURPOSE_EXT_ENTITY_ASSOC, properties -> properties.put
+                (PURPOSE_EXTERNAL_ENTITY_ASSOC, purposeEntityAssociation))
+                .executeWith(new OperationDelegate<PurposeEntityAssociation>() {
+                    @Override
+                    public PurposeEntityAssociation execute() throws ConsentManagementException {
+
+                        return consentManager.addPurposeEntityAssociation(purposeEntityAssociation);
+                    }
+                })
+                .intercept(POST_ADD_PURPOSE_EXT_ENTITY_ASSOC, properties -> properties.put(PURPOSE_EXTERNAL_ENTITY_ASSOC
+                        , purposeEntityAssociation)).getResult();
+    }
+
+    public PurposeEntityAssociation getPurposeEntityAssociation(int associationId, int tenantId)
+            throws ConsentManagementException {
+
+        ConsentMessageContext context = new ConsentMessageContext();
+        ConsentInterceptorTemplate<PurposeEntityAssociation, ConsentManagementException>
+                template = new ConsentInterceptorTemplate<>(consentMgtInterceptors, context);
+
+        return template.intercept(PRE_GET_PURPOSE, properties -> properties.put(PURPOSE_ENTITY_ASSOC_ID, associationId))
+                .executeWith(new OperationDelegate<PurposeEntityAssociation>() {
+                    @Override
+                    public PurposeEntityAssociation execute() throws ConsentManagementException {
+
+                        return consentManager.getPurposeEntityAssociation(associationId, tenantId);
+                    }
+                })
+                .intercept(POST_GET_PURPOSE, properties -> properties.put(PURPOSE_ENTITY_ASSOC_ID, associationId))
+                .getResult();
+    }
+
+
+    public void deletePurposeEntityAssociation(int associationId, int tenantId)
+            throws ConsentManagementException {
+
+        ConsentMessageContext context = new ConsentMessageContext();
+        ConsentInterceptorTemplate<Void, ConsentManagementException>
+                template = new ConsentInterceptorTemplate<>(consentMgtInterceptors, context);
+
+        template.intercept(PRE_DELETE_PURPOSE_EXT_ENTITY_ASSOC, properties -> properties.put(PURPOSE_EXTERNAL_ENTITY_ASSOC
+                , null))
+                .executeWith(new OperationDelegate<Void>() {
+                    @Override
+                    public Void execute() throws ConsentManagementException {
+
+                        consentManager.deletePurposeEntityAssociation(associationId, tenantId);
+                        return null;
+                    }
+                })
+                .intercept(POST_DELETE_PURPOSE_EXT_ENTITY_ASSOC, properties -> properties.put(PURPOSE_EXTERNAL_ENTITY_ASSOC
+                        , null));
+
+    }
+
+    public List<PurposeEntityAssociation> listPurposeAssociations(String purposeId, String
+            externalEntityName, String externalEntityType, int tenantId, int limit, int offset)
+            throws ConsentManagementException {
+
+        ConsentMessageContext context = new ConsentMessageContext();
+        ConsentInterceptorTemplate<List<PurposeEntityAssociation>, ConsentManagementException>
+                template = new ConsentInterceptorTemplate<>(consentMgtInterceptors, context);
+
+        return template.intercept(PRE_ADD_PURPOSE_EXT_ENTITY_ASSOC, properties -> {
+            properties.put(PURPOSE_ID, purposeId);
+            properties.put("ENTITY_NAME", externalEntityName);
+            properties.put("ENTITY_TYPE", externalEntityType);
+            properties.put(LIMIT, limit);
+            properties.put(OFFSET, offset);
+        })
+                .executeWith(new OperationDelegate<List<PurposeEntityAssociation>>() {
+                    @Override
+                    public List<PurposeEntityAssociation> execute() throws ConsentManagementException {
+
+                        return consentManager.listPurposeAssociations(purposeId, externalEntityName,
+                                externalEntityType, tenantId, limit, offset);
+                    }
+                })
+                .intercept(POST_ADD_PURPOSE_EXT_ENTITY_ASSOC, properties -> properties.put(PURPOSE, null)).getResult();
+    }
+
 }

@@ -17,6 +17,7 @@
 
 package org.wso2.carbon.consent.mgt.endpoint.impl;
 
+import io.swagger.models.auth.In;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementClientException;
@@ -25,6 +26,7 @@ import org.wso2.carbon.consent.mgt.core.model.AddReceiptResponse;
 import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
 import org.wso2.carbon.consent.mgt.core.model.PurposeCategory;
+import org.wso2.carbon.consent.mgt.core.model.PurposeEntityAssociation;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptListResponse;
@@ -36,10 +38,14 @@ import org.wso2.carbon.consent.mgt.endpoint.dto.PIIcategoryRequestDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PiiCategoryListResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeCategoryListResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeCategoryRequestDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationGetResponseDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationListResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeGetResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeListResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeRequestDTO;
 import org.wso2.carbon.consent.mgt.endpoint.util.ConsentEndpointUtils;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,6 +54,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.Response;
 
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.EXTERNAL_ENTITY_ASSOC_RESOURCE_PATH;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_NO_USER_FOUND;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PII_CATEGORY_ALREADY_EXIST;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PII_CATEGORY_ID_INVALID;
@@ -249,7 +256,7 @@ public class ConsentsApiServiceImpl extends ConsentsApiService {
 
         try {
             List<PurposeListResponseDTO> purposeListResponseDTOS = getPurposeListResponseDTO(group, groupType, limit,
-                                                                                             offset);
+                    offset);
             return Response.ok().entity(purposeListResponseDTOS).build();
         } catch (ConsentManagementClientException e) {
             return handleBadRequestResponse(e);
@@ -338,6 +345,137 @@ public class ConsentsApiServiceImpl extends ConsentsApiService {
         } catch (Throwable throwable) {
             return handleUnexpectedServerError(throwable);
         }
+    }
+
+    @Override
+    public Response consentsPurposeEntityAssociationsAssociationIdDelete(String associationId) {
+
+        try {
+            int loggedInUserTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId(true);
+            getConsentManager().deletePurposeEntityAssociation(Integer.parseInt(associationId), loggedInUserTenantId);
+            return Response.ok().build();
+        } catch (ConsentManagementClientException e) {
+            return handleBadRequestResponse(e);
+        } catch (ConsentManagementException e) {
+            return handleServerErrorResponse(e);
+        } catch (Throwable throwable) {
+            return handleUnexpectedServerError(throwable);
+        }
+    }
+
+    @Override
+    public Response consentsPurposeEntityAssociationsAssociationIdGet(String associationId) {
+
+        try {
+            int loggedInUserTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId(true);
+            PurposeEntityAssociation purposeEntityAssociation = getConsentManager()
+                    .getPurposeEntityAssociation(Integer.parseInt(associationId), loggedInUserTenantId);
+
+            return Response.ok().entity(getPurposeEntityAssociationGetResponseDTO(purposeEntityAssociation)).build();
+        } catch (ConsentManagementClientException e) {
+            return handleBadRequestResponse(e);
+        } catch (ConsentManagementException e) {
+            return handleServerErrorResponse(e);
+        } catch (Throwable throwable) {
+            return handleUnexpectedServerError(throwable);
+        }
+    }
+
+    @Override
+    public Response consentsPurposeEntityAssociationsGet(String purposeId, String externalEntityName,
+                                                         String externalEntityType, Integer limit, Integer offset) {
+
+        if (limit == null) {
+            limit = 0;
+        }
+        if (offset == null) {
+            offset = 0;
+        }
+
+        try {
+            int loggedInUserTenantId = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantId(true);
+            List<PurposeEntityAssociation> purposeEntityAssociations = getConsentManager().
+                    listPurposeAssociations(purposeId, externalEntityName, externalEntityType, loggedInUserTenantId,
+                            limit, offset);
+            PurposeEntityAssociationListResponseDTO purposeEntityAssociationListResponseDTO =
+                    getPurposeEntityAssocListResponse(purposeEntityAssociations);
+            return Response.ok().entity(purposeEntityAssociationListResponseDTO).build();
+        } catch (ConsentManagementClientException e) {
+            return handleBadRequestResponse(e);
+        } catch (ConsentManagementException e) {
+            return handleServerErrorResponse(e);
+        } catch (Throwable throwable) {
+            return handleUnexpectedServerError(throwable);
+        }
+    }
+
+    private PurposeEntityAssociationListResponseDTO getPurposeEntityAssocListResponse(List<PurposeEntityAssociation>
+                                                                                              purposeEntityAssociations) {
+
+        PurposeEntityAssociationListResponseDTO purposeEntityAssociationListResponseDTO = new
+                PurposeEntityAssociationListResponseDTO();
+        purposeEntityAssociations.forEach(purposeEntityAssoc -> {
+            PurposeEntityAssociationGetResponseDTO purposeEntityAssociationGetResponseDTO =
+                    getPurposeEntityAssociationGetResponseDTO(purposeEntityAssoc);
+            purposeEntityAssociationListResponseDTO.getAssociations().add(purposeEntityAssociationGetResponseDTO);
+        });
+        return purposeEntityAssociationListResponseDTO;
+    }
+
+    private PurposeEntityAssociationGetResponseDTO getPurposeEntityAssociationGetResponseDTO(PurposeEntityAssociation
+                                                                                                     purposeEntityAssoc) {
+
+        PurposeEntityAssociationGetResponseDTO purposeEntityAssociationGetResponseDTO = new
+                PurposeEntityAssociationGetResponseDTO();
+        purposeEntityAssociationGetResponseDTO.setAssociationId(String.valueOf
+                (purposeEntityAssoc.getAssociationId()));
+        purposeEntityAssociationGetResponseDTO.setPurposeId(purposeEntityAssoc.getPurposeId());
+        purposeEntityAssociationGetResponseDTO.setExternalEntityName(purposeEntityAssoc.getExternalEntityName());
+        purposeEntityAssociationGetResponseDTO.setExternalEntityType(purposeEntityAssoc.getExternalEntityType());
+        purposeEntityAssociationGetResponseDTO.setTenantId(purposeEntityAssoc.getTenantId());
+        return purposeEntityAssociationGetResponseDTO;
+    }
+
+    @Override
+    public Response consentsPurposeEntityAssociationsPost(PurposeEntityAssociationDTO purposeEntityAssociation) {
+
+        try {
+            PurposeEntityAssociation purposeEntityAssociationResponse =
+                    getConsentManager().addPurposeEntityAssociation(getPurposeEntityAssociation(purposeEntityAssociation));
+            PurposeEntityAssociationGetResponseDTO purposeEntityAssociationGetResponseDTO =
+                    getpurposeEntityAssocGetResponse(purposeEntityAssociationResponse);
+            return Response.ok().entity(purposeEntityAssociationGetResponseDTO).location(
+                    getPurposeEntityAssocLocation(purposeEntityAssociationResponse)).build();
+        } catch (ConsentManagementClientException e) {
+            return handleBadRequestResponse(e);
+        } catch (ConsentManagementException e) {
+            return handleServerErrorResponse(e);
+        } catch (Throwable throwable) {
+            return handleUnexpectedServerError(throwable);
+        }
+    }
+
+    private PurposeEntityAssociationGetResponseDTO
+    getpurposeEntityAssocGetResponse(PurposeEntityAssociation purposeEntityAssociationResponse) {
+
+        PurposeEntityAssociationGetResponseDTO purposeEntityAssociationGetResponseDTO =
+                new PurposeEntityAssociationGetResponseDTO();
+        purposeEntityAssociationGetResponseDTO.setAssociationId(String.valueOf(purposeEntityAssociationResponse
+                .getAssociationId()));
+        purposeEntityAssociationGetResponseDTO.
+                setExternalEntityName(purposeEntityAssociationResponse.getExternalEntityName());
+        purposeEntityAssociationGetResponseDTO.
+                setExternalEntityType(purposeEntityAssociationResponse.getExternalEntityType());
+        purposeEntityAssociationGetResponseDTO.setPurposeId(purposeEntityAssociationResponse.getPurposeId());
+        purposeEntityAssociationGetResponseDTO.setTenantId(purposeEntityAssociationResponse.getTenantId());
+        return purposeEntityAssociationGetResponseDTO;
+    }
+
+    private PurposeEntityAssociation getPurposeEntityAssociation(PurposeEntityAssociationDTO purposeEntityAssociation) {
+
+        return new PurposeEntityAssociation(purposeEntityAssociation.getPurposeId(),
+                purposeEntityAssociation.getExternalEntityName(),
+                purposeEntityAssociation.getExternalEntityType(), 0);
     }
 
     private List<ConsentResponseDTO> searchReceipts(Integer limit, Integer offset, String piiPrincipalId, String
@@ -502,5 +640,10 @@ public class ConsentsApiServiceImpl extends ConsentsApiService {
     private URI getPiiCategoryLocationURI(PiiCategoryListResponseDTO response) throws URISyntaxException {
 
         return new URI(PII_CATEGORY_RESOURCE_PATH + "/" + response.getPiiCategoryId());
+    }
+
+    private URI getPurposeEntityAssocLocation(PurposeEntityAssociation response) throws URISyntaxException {
+
+        return new URI(EXTERNAL_ENTITY_ASSOC_RESOURCE_PATH + "/" + response.getAssociationId());
     }
 }

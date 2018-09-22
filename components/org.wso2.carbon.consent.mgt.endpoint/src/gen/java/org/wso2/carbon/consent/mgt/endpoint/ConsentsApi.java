@@ -16,6 +16,9 @@ import org.wso2.carbon.consent.mgt.endpoint.dto.ConsentAddResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurpseCategoriesDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeCategoryListResponseDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeCategoryRequestDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationGetResponseDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationListResponseDTO;
+import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeEntityAssociationDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposesDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeRequestDTO;
 import org.wso2.carbon.consent.mgt.endpoint.dto.PurposeGetResponseDTO;
@@ -242,6 +245,90 @@ public class ConsentsApi  {
     public Response consentsPurposeCategoriesPurposeCategoryIdGet(@ApiParam(value = "Unique ID of the purpose category",required=true ) @PathParam("purposeCategoryId")  String purposeCategoryId)
     {
     return delegate.consentsPurposeCategoriesPurposeCategoryIdGet(purposeCategoryId);
+    }
+    @DELETE
+    @Path("/purpose-entity-associations/{associationId}")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "Delete a purpose-entity assocoation\n", notes = "This API is used to delete a purpose-entity association.\n", response = void.class)
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "OK"),
+        
+        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"),
+        
+        @io.swagger.annotations.ApiResponse(code = 401, message = "Unauthorized"),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found"),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Server Error") })
+
+    public Response consentsPurposeEntityAssociationsAssociationIdDelete(@ApiParam(value = "Unique ID of the purpose-entity association",required=true ) @PathParam("associationId")  String associationId)
+    {
+    return delegate.consentsPurposeEntityAssociationsAssociationIdDelete(associationId);
+    }
+    @GET
+    @Path("/purpose-entity-associations/{associationId}")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "Retrieve a purpose\n", notes = "This API is used to retrieve a specific purpose using the purpose ID.\n", response = PurposeEntityAssociationGetResponseDTO.class)
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "OK"),
+        
+        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"),
+        
+        @io.swagger.annotations.ApiResponse(code = 401, message = "Unauthorized"),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found"),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Server Error") })
+
+    public Response consentsPurposeEntityAssociationsAssociationIdGet(@ApiParam(value = "Id of the purpose-entity association",required=true ) @PathParam("associationId")  String associationId)
+    {
+    return delegate.consentsPurposeEntityAssociationsAssociationIdGet(associationId);
+    }
+    @GET
+    @Path("/purpose-entity-associations")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "Retrieve all purposes\n", notes = "This API is used to retrieve purpose entity associations.\n", response = PurposeEntityAssociationListResponseDTO.class)
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "OK"),
+        
+        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"),
+        
+        @io.swagger.annotations.ApiResponse(code = 401, message = "Unauthorized"),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Not Found"),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Server Error") })
+
+    public Response consentsPurposeEntityAssociationsGet(@ApiParam(value = "The unique identifier of a purpose") @QueryParam("purposeId")  String purposeId,
+    @ApiParam(value = "The name of the external entity associated with a purpose") @QueryParam("externalEntityName")  String externalEntityName,
+    @ApiParam(value = "The type of the external entity associated with a purpose") @QueryParam("externalEntityType")  String externalEntityType,
+    @ApiParam(value = "Number of search results") @QueryParam("limit")  Integer limit,
+    @ApiParam(value = "Start index of the search") @QueryParam("offset")  Integer offset)
+    {
+    return delegate.consentsPurposeEntityAssociationsGet(purposeId,externalEntityName,externalEntityType,limit,offset);
+    }
+    @POST
+    @Path("/purpose-entity-associations")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "Add purpose-external entity association\n", notes = "This API is used to add association to a purpose with an external entity.\n", response = PurposeEntityAssociationGetResponseDTO.class)
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 201, message = "Successful response"),
+        
+        @io.swagger.annotations.ApiResponse(code = 400, message = "Bad Request"),
+        
+        @io.swagger.annotations.ApiResponse(code = 401, message = "Unauthorized"),
+        
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict"),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Server Error") })
+
+    public Response consentsPurposeEntityAssociationsPost(@ApiParam(value = "This represents the purpose and external entity association which needs to be made." ,required=true ) PurposeEntityAssociationDTO purposeEntityAssociation)
+    {
+    return delegate.consentsPurposeEntityAssociationsPost(purposeEntityAssociation);
     }
     @GET
     @Path("/purposes")

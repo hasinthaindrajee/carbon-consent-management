@@ -19,8 +19,10 @@ package org.wso2.carbon.consent.mgt.core.dao;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementException;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementServerException;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
+import org.wso2.carbon.consent.mgt.core.model.PurposeEntityAssociation;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Perform CRUD operations for {@link Purpose}.
@@ -57,10 +59,10 @@ public interface PurposeDAO {
     /**
      * Get the {@link Purpose} corresponding to the input name.
      *
-     * @param name Name of the {@link Purpose}.
-     * @param group Purpose group
+     * @param name      Name of the {@link Purpose}.
+     * @param group     Purpose group
      * @param groupType Purpose group type
-     * @param tenantId Tenant domain of the {@link Purpose}.
+     * @param tenantId  Tenant domain of the {@link Purpose}.
      * @return Purpose for the input criteria.
      * @throws ConsentManagementException If error occurs while retrieving the {@link Purpose}.
      */
@@ -70,8 +72,8 @@ public interface PurposeDAO {
     /**
      * List {@link Purpose} items for a given search criteria.
      *
-     * @param limit Maximum number of results expected.
-     * @param offset Result offset.
+     * @param limit    Maximum number of results expected.
+     * @param offset   Result offset.
      * @param tenantId Tenant domain to be searched.
      * @return List of {@link Purpose} entries.
      * @throws ConsentManagementException If error occurs while searching the {@link Purpose}.
@@ -81,11 +83,11 @@ public interface PurposeDAO {
     /**
      * List {@link Purpose} items for a given search criteria.
      *
-     * @param group Purpose group
+     * @param group     Purpose group
      * @param groupType Purpose group type
-     * @param limit Maximum number of results expected.
-     * @param offset Result offset.
-     * @param tenantId Tenant domain to be searched.
+     * @param limit     Maximum number of results expected.
+     * @param offset    Result offset.
+     * @param tenantId  Tenant domain to be searched.
      * @return List of {@link Purpose} entries.
      * @throws ConsentManagementException If error occurs while searching the {@link Purpose}.
      */
@@ -103,9 +105,25 @@ public interface PurposeDAO {
 
     /**
      * Check whether the {@link Purpose} by ID is used in a receipt
+     *
      * @param id D of the {@link Purpose} to be validated
      * @return
      */
     boolean isPurposeUsed(int id) throws ConsentManagementServerException;
+
+    PurposeEntityAssociation addPurposeEntityAssociation(PurposeEntityAssociation purposeEntityAssociation) throws
+            ConsentManagementException;
+
+    PurposeEntityAssociation getPurposeEntityAssociation(int associationId, int tenantId) throws
+            ConsentManagementException;
+
+    void deletePurposeEntityAssociation(int associationId, int tenantId)
+            throws ConsentManagementException;
+
+    void deletePurposeEntityAssociations(String purposeId) throws ConsentManagementException;
+
+    List<PurposeEntityAssociation> listPurposeAssociations(String purposeId, String externalEntityName,
+                                                           String externalEntityType, int tenantId, int imit,
+                                                           int offset) throws ConsentManagementException;
 
 }
